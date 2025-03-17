@@ -33,33 +33,49 @@ namespace Api.Controllers
         [HttpPost("CreateClient")]
         public async Task<IActionResult> CreateClientAsync([FromBody] ClientCreateRequest request)
         {
-            var client = Client.Create(
+            try
+            {
+                var client = Client.Create(
                 Guid.NewGuid(),
                 request.FullName,
                 request.Birthday
-            );
+                );
 
-            var clientId = await _service.AddAsync( client );
-            return Ok (clientId) ;
+                var clientId = await _service.AddAsync(client);
+                return Ok(clientId);
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(500, ex.Message);
+            }
+            
         }
 
         [HttpGet("birthdays/{date}")]
         public async Task<IActionResult> GetBirthdayClientsAsync([FromRoute] string date)
         {
-            if (!DateOnly.TryParse(date, out DateOnly parsedDate))
+            try
             {
-                return BadRequest("Некоректний формат дати. Використовуйте формат yyyy-MM-dd.");
+                if (!DateOnly.TryParse(date, out DateOnly parsedDate))
+                {
+                    return BadRequest("Некоректний формат дати. Використовуйте формат yyyy-MM-dd.");
+                }
+
+                var clients = await _service.GetBirthdayClientsAsync(parsedDate);
+
+                var result = clients.Select(c => new
+                {
+                    Id = c.Id,
+                    FullName = c.FullName
+                }).ToList();
+
+                return Ok(result);
             }
-
-            var clients = await _service.GetBirthdayClientsAsync(parsedDate);
-
-            var result = clients.Select(c => new
+            catch (Exception ex) 
             {
-                Id = c.Id,
-                FullName = c.FullName
-            }).ToList();
-
-            return Ok(result);
+                return StatusCode(500, ex.Message);
+            }
+            
         }
 
 

@@ -19,87 +19,80 @@ namespace Infrastructure.Repositoryes
 
         public async Task<Guid> AddAsync(Client client)
         {
-            var clientEntity = new ClientEntity
+            try 
             {
-                Id = client.Id,
-                FullName = client.FullName,
-                BirthDate = client.BirthDate,
-                RegistrationDate = client.RegistrationDate
-            };
+                var clientEntity = new ClientEntity
+                {
+                    Id = client.Id,
+                    FullName = client.FullName,
+                    BirthDate = client.BirthDate,
+                    RegistrationDate = client.RegistrationDate
+                };
 
-            await _context.Clients.AddAsync(clientEntity);
-            await _context.SaveChangesAsync();
-
-            return clientEntity.Id;
-        }
-
-        public async Task<Guid> DeleteAsync(Guid clientId)
-        {
-           var clientEntity = await _context.Clients.FindAsync(clientId);
-            if (clientEntity != null) 
-            {
-                _context.Clients.Remove(clientEntity);
+                await _context.Clients.AddAsync(clientEntity);
                 await _context.SaveChangesAsync();
-            }
 
-            return clientEntity.Id;
+                return clientEntity.Id;
+            } 
+            catch (Exception ex)
+            {
+                throw new Exception("Faiid to create new Client", ex);
+            } 
         }
 
         public async Task<List<Client>> GetAllAsync()
         {
-            var clientEntity = await _context.Clients.ToListAsync();
-            return clientEntity.Select(c => _mapper.Map<Client>(c)).ToList();
+            try
+            {
+                var clientEntity = await _context.Clients.ToListAsync();
+                return clientEntity.Select(c => _mapper.Map<Client>(c)).ToList();
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception("Fail to ger all Clients", ex);
+            }
         }
 
         public async Task<List<Client>> GetBirthdayClientsAsync(DateOnly date)
         {
-            var clientEntities = await _context.Clients
-            .Where(c => c.BirthDate.Month == date.Month && c.BirthDate.Day == date.Day)
-            .ToListAsync();
+            try
+            {
+                var clientEntities = await _context.Clients
+                    .Where(c => c.BirthDate.Month == date.Month && c.BirthDate.Day == date.Day)
+                    .ToListAsync();
 
-            return clientEntities.Select(c => _mapper.Map<Client>(c)).ToList();
-        }
-
-        public async Task<Client> GetByIdAsync(Guid clientId)
-        {
-            ClientEntity clientEntity = await _context.Clients
-                .AsNoTracking()
-                .FirstOrDefaultAsync(c => c.Id == clientId);
-
-            Client client = _mapper.Map<Client>(clientEntity);
-
-            return client;
+                return clientEntities.Select(c => _mapper.Map<Client>(c)).ToList();
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception("Fail", ex);
+            }
+           
         }
 
         public async Task<List<(Client Client, DateTime LastPurchaseDate)>> GetClientsWithRecentPurchasesAsync(int days)
         {
-            var cutoffDate = DateTime.UtcNow.AddDays(-days); 
-
-            return await _context.Set<Client>()
-                .Where(c => c.Purchases.Any(p => p.Date >= cutoffDate)) 
-                .Select(c => new
-                {
-                    Client = c,
-                    LastPurchaseDate = c.Purchases.Max(p => p.Date) 
-                })
-                .ToListAsync()
-                .ContinueWith(task =>
-                    task.Result.Select(x => (x.Client, x.LastPurchaseDate)).ToList() 
-                );
-        }
-
-
-        public async Task<Guid> UpdateAsync(Guid id, string fullName, DateTime birthday)
-        {
-            var clientEntity = await _context.Clients.FindAsync(id);
-            if (clientEntity != null)
+            try
             {
-                clientEntity.FullName = fullName;
-                clientEntity.BirthDate = birthday;
-                await _context.SaveChangesAsync();
-            }
+                var cutoffDate = DateTime.UtcNow.AddDays(-days);
 
-            return id;
+                return await _context.Set<Client>()
+                    .Where(c => c.Purchases.Any(p => p.Date >= cutoffDate))
+                    .Select(c => new
+                    {
+                        Client = c,
+                        LastPurchaseDate = c.Purchases.Max(p => p.Date)
+                    })
+                    .ToListAsync()
+                    .ContinueWith(task =>
+                        task.Result.Select(x => (x.Client, x.LastPurchaseDate)).ToList()
+                    );
+            }
+            catch (Exception ex) 
+            {
+                throw new Exception("Fail", ex);
+            }
+            
         }
     }
 }

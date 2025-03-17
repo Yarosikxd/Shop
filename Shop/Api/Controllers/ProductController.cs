@@ -19,22 +19,38 @@ namespace Api.Controllers
         [HttpGet("GetAllProducts")]
         public async Task<IActionResult> GetAllProdutsAsync()
         {
-            var product = await _service.GetAllAsync();
-            return Ok(product);
+            try
+            {
+                var product = await _service.GetAllAsync();
+                return Ok(product);
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+            
         }
 
         [HttpPost("CreateProduct")] 
         public async Task<IActionResult> CreateProductAsync([FromBody] CreateProductRequest request)
         {
-            var product = Product.Create(
+            try
+            {
+                var product = Product.Create(
                 Guid.NewGuid(),
                 request.Name,
                 request.Caterogy,
                 request.Article,
                 request.Price);
 
-            var productId = await _service.AddAsync(product);
-            return Ok(productId);
+                var productId = await _service.AddAsync(product);
+                return Ok(productId);
+            }
+            catch (Exception ex) 
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+            
         }
 
     }
